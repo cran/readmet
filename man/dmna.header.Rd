@@ -30,7 +30,7 @@ AUSTAL2000 model reference (by Ingenieurbuero Janicke)
 %% ~Make other sections like Warning with \section{Warning }{....} ~
 
 \examples{
-hdr <- dmna.header(system.file("extdata", "example.dmna", package="readmet"))
+hdr <- dmna.header(system.file("extdata", "example-grid.dmna", package="readmet"))
 hdr$idnt
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the

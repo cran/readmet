@@ -11,12 +11,15 @@
   columns x, y, z for each respective axis.
 }
 \usage{
-dmna.axes(file)
+dmna.axes(file, debug = FALSE)
 }
 \arguments{
   \item{file}{
     name (and path if necessary) of the file to read
-}
+  }
+  \item{debug}{
+    if TRUE shwon debugging information
+  }
 }
 \value{
   returns a data.frame with the following columns:
@@ -38,7 +41,7 @@ AUSTAL 3.1 model reference (by Ingenieurbuero Janicke)
 }
 
 \examples{
-ax <- dmna.axes(system.file("extdata", "example.dmna", package="readmet"))
+ax <- dmna.axes(system.file("extdata", "example-grid.dmna", package="readmet"))
 ax$x
 }
 

@@ -215,22 +215,184 @@ read.dmna <- function( file, val=1, debug=FALSE ) {
     # artp CZ is a timeseries though described as as 2D array (why?)
     #
     if (debug) print ('filetype CZ: adding time column')
-    t1 = .parsedifftime(header$t1)  # "00:00:00"
-    t2 = .parsedifftime(header$t2)  # "366.00:00:00"
-    dt = .parsedifftime(header$dt)  # "01:00:00"
-    rd = gsub("([0-9]{4}-[0-9]{2}-[0-9]{2})[ T.]([0-9]{2}:[0-9]{2}:[0-9]{2}).*",
-              "\\1T\\2",
-              header$rdat) # "2000-01-01T00:00:00+0100" or "2000-01-01.00:00:00+0100" or "2000-01-01 00:00:00"
-    rdat = as.POSIXct(rd, format="%Y-%m-%dT%H:%M:%S") 
-    if (debug) print (paste(rdat + t1, rdat + t2 - dt, dt))
-    te = seq(from = rdat + t1, to = rdat + t2 - dt, by = dt)
-    if (debug) print (paste('... ',strftime(te[1],"%F %T"),' -- ',strftime(te[length(te)],"%F %T")))
+    te = .timeaxis(header, debug)
     out = cbind(as.data.frame(dat), data.frame(te=te))
   } else {
     out=drop(dat[[ov]])
   }
   return (out)
 }
+#
+# ------------------------------------------------------------------------
+#
+dmna.header <- function(file) {
+  #
+  # read the file as text lines and find the divider line "*"
+  #
+  lines <- readLines(file)
+  divider=which(lines == "*")
+  if (length(divider) != 1) {
+    stop (paste(file,"is not in DMNA format"))
+  }
+  #
+  # convert the file header into named list
+  #
+  head_lines=lines[1:(divider-1)]
+  # remove empty lines
+  head_lines=head_lines[head_lines!=""]
+  # convert space behind line tag into tab (if not already present)
+  head_lines=sub("\ +","\t",head_lines)
+  # 1st field is name 2nd and on is content
+  head_names=sub("\t.*","",head_lines)
+  head_values=sub("[a-z0-9]+\t","",head_lines)
+  #remove tabs and quotes
+  head_values=gsub("\t"," ",head_values)
+  head_values=gsub("\\\"","",head_values)
+  #make named list
+  names(head_values)=head_names
+  head=as.list( head_values )
+  head$lines=divider
+  return(head)
+}
+#
+# ------------------------------------------------------------------------
+#
+dmna.grid <- function(file) {
+  header <- dmna.header(file)
+  #
+  # get axes length
+  #
+  if ( ! ( "dims" %in% names(header))) {
+    stop (paste(file,"does not contain number of dimensions"))
+  }
+  dims=header$dims
+  if ( header$artp == "ZA" | dims<2 ) {
+    stop (paste("this function does not apply to timeseries"))
+  }
+  if ( ! ( "hghb" %in% names(header) 
+           &&  "lowb" %in% names(header))) {
+    stop (paste(file,"does not contain index value ranges"))
+  }
+  lowb=read.table(header=F,text=header$lowb)
+  hghb=read.table(header=F,text=header$hghb)
+  xlen=hghb[,1]-lowb[,1]+1
+  ylen=hghb[,2]-lowb[,2]+1
+  #
+  # get axes start
+  #
+  if ( ! (  "xmin" %in% names(header) 
+            && "ymin" %in% names(header) 
+            && "delta" %in% names(header))) {
+    stop (paste(file,"does not contain all information on axes"))
+  }
+  xmin=as.numeric(header$xmin)
+  ymin=as.numeric(header$ymin)
+  delta=as.numeric(header$delta)
+  #
+  # reference position
+  #
+  if ( ! (  "refx" %in% names(header) 
+            && "refy" %in% names(header))) {
+    stop (paste(file,"does not contain all information on axes"))
+  }
+  refx=as.numeric(header$refx)
+  refy=as.numeric(header$refy)
+  #
+  # lower left corner reference:
+  #
+  xll=refx+xmin
+  yll=refy+ymin
+  #
+  # return list
+  #
+  out=c(xlen,ylen,xll,yll,delta)
+  names(out)=c("xlen","ylen","xll","yll","delta")
+  return(out)
+}
+#
+# ------------------------------------------------------------------------
+#
+dmna.axes <- function(file, debug=FALSE) {
+  header <- dmna.header(file)
+  #
+  # get axes length
+  #
+  if ( ! ( "dims" %in% names(header))) {
+    stop (paste(file,"does not contain number of dimensions"))
+  }
+  dims=header$dims
+  if ( "axes" %in% names(header)) {
+    axes=header$axes
+  }else{
+    if ( dims == 1) {
+      axes='ti'
+    }else if ( dims == 2 ){
+      axes='xy'  
+    }else if ( dims >= 3 ){
+      axes='xyz'  
+    }else{
+      stop (paste(file,"does not contain names of axes"))
+    } 
+  }
+  if ( ! ( "hghb" %in% names(header) &&  "lowb" %in% names(header))) {
+    stop (paste(file,"does not contain index value ranges"))
+  }
+  lowb=read.table(header=F,text=header$lowb)
+  hghb=read.table(header=F,text=header$hghb)
+  
+  xlen=hghb[,1]-lowb[,1]+1
+  if (dims>1) {
+    ylen=hghb[,2]-lowb[,2]+1
+  } else {
+    ylen=1
+  }
+  if (dims>2) {
+    zlen=hghb[,3]-lowb[,3]+1
+  } else {
+    zlen=1
+  }
+  if (axes == 'ti'){
+    # time in data:
+    if (grepl("te%", header$form)){
+      te = read.dmna(file)$te
+    } else {
+      te = .timeaxis(header, xlen = xlen, debug = debug)
+    }
+    return(list(te=te))
+  }else{
+    #
+    # get axes start
+    #
+    if ( ! (  "xmin" %in% names(header) 
+              && "ymin" %in% names(header) 
+              && "delta" %in% names(header))) {
+      stop (paste(file,"does not contain information on all axes"))
+    }
+    xmin=as.numeric(header$xmin)
+    ymin=as.numeric(header$ymin)
+    delta=as.numeric(header$delta)
+    x=xmin+delta*((1:xlen)-1)
+    if (dims>1) {
+      y=ymin+delta*((1:ylen)-1)
+    } else {
+      y=0:0
+    }
+    if (zlen==1) {
+      return(list(x=x,y=y))
+    } else {
+      if ( ! (  "sk" %in% names(header))) {
+        stop (paste(file,"does not contain level heights"))
+      }
+      sk=as.matrix(read.table(header=F,text=header$sk))
+      if (! ( hghb[,3] <= length(sk) && lowb[,3] >= 1 ) ) {
+        stop (paste(file,"level indices outside givel level heights"))
+      }
+      z=sk[lowb[,3]:hghb[,3]]
+      return(list(x=x,y=y,z=z))
+    }
+  }
+}
+#
 # ------------------------------------------------------------------------
 #
 # define a helper function following a discussion at
@@ -261,6 +423,37 @@ read.dmna <- function( file, val=1, debug=FALSE ) {
     }
   }
 }
+#
+# ------------------------------------------------------------------------
+#
+#' @NoRd
+.timeaxis <- function(header, xlen = -1, debug = FALSE){
+  if ( ! (  "dt" %in% names(header)
+            && "rdat" %in% names(header))){
+    stop (paste(file,"does not contain enough information on time axis"))
+  }
+  dt = .parsedifftime(header$dt)  # "01:00:00"
+  rd = gsub("([0-9]{4}-[0-9]{2}-[0-9]{2})[ T.]([0-9]{2}:[0-9]{2}:[0-9]{2}).*",
+            "\\1T\\2",
+            header$rdat) # "2000-01-01T00:00:00+0100" or "2000-01-01.00:00:00+0100" or "2000-01-01 00:00:00"
+  rdat = as.POSIXct(rd, format="%Y-%m-%dT%H:%M:%S") 
+  if (  "t1" %in% names(header)){
+    t1 = .parsedifftime(header$t1)  # "00:00:00"
+  }else{
+    t1 = difftime(0, units = 'secs')
+  }
+  if (  "t1" %in% names(header)){
+    t2 = .parsedifftime(header$t2)  # "366.00:00:00"
+  }else{
+    t2 = difftime(0, units = 'secs')
+  }
+  if (debug) print (paste(rdat + t1, rdat + t2 - dt, dt))
+  te = seq(from = rdat + t1, to = rdat + t2 - dt, by = dt)
+  if (debug) print (paste('... ',strftime(te[1],"%F %T"),' -- ',strftime(te[length(te)],"%F %T")))
+  return(te)
+}
+#
+# ------------------------------------------------------------------------
 #
 #' @NoRd
 .parsedifftime <- function(s){

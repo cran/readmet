@@ -58,7 +58,7 @@ nothing.
 }
 \examples{
 # read data and grid info
-infile <- system.file("extdata", "example.dmna", package="readmet")
+infile <- system.file("extdata", "example-grid.dmna", package="readmet")
 so2 <- read.dmna(infile)
 grid <- dmna.grid(infile)
 # write file

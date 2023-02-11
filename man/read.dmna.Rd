@@ -49,8 +49,15 @@ AUSTAL 3.1 model reference (by Ingenieurbuero Janicke)
 %% ~Make other sections like Warning with \section{Warning }{....} ~
 
 \examples{
-so2 <- read.dmna(system.file("extdata", "example.dmna", package="readmet"))
-filled.contour(so2)
+so2 <- read.dmna(system.file("extdata", "example-grid.dmna", package="readmet"))
+ax <- dmna.axes(system.file("extdata", "example-grid.dmna", package="readmet"))
+filled.contour(ax$x, ax$y, so2)
+
+monitor <- read.dmna(system.file("extdata", "example-monitor.dmna", package="readmet"))
+plot(monitor$te, monitor$X2, type="l")
+
+series <- read.dmna(system.file("extdata", "example-series.dmna", package="readmet"))
+plot(series$te, series$ua, type="l")
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory.

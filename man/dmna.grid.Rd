@@ -36,7 +36,7 @@ AUSTAL 3.1 model reference (by Ingenieurbuero Janicke)
   This function was added in version 1.3.0.
 }
 \examples{
-dmna.grid(system.file("extdata", "example.dmna", package="readmet"))
+dmna.grid(system.file("extdata", "example-grid.dmna", package="readmet"))
 }
 \keyword{ IO }
 \keyword{ file }

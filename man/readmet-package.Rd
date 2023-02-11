@@ -11,8 +11,8 @@ Contains tools for reading and writing data from or to files in dmna, Scintec Fo
 \tabular{ll}{
 Package: \tab readmet\cr
 Type: \tab Package\cr
-Version: \tab 1.6.6\cr
-Date: \tab 2023-01-15\cr
+Version: \tab 1.6.9\cr
+Date: \tab 2023-02-11\cr
 License: \tab GPL-3\cr
 }
 Currently supported:\cr

@@ -1,7 +1,7 @@
 
 cset  "utf-8"
 prgm  "AUSTAL2000_2.6.11-LG-0"
-idnt  "Eisenschmelze SO2"
+idnt  "example grid"
 artp  "C"
 axes  "xyz"
 vldf  "V"
@@ -10,8 +10,8 @@ t2  "366.00:00:00"
 dt    "01:00:00"
 index  366
 groups 9
-refx   3337718
-refy   5513933
+refx   3332627
+refy   5514971
 ggcs  "GK"
 rdat  "2000-01-01.00:00:00"
 xmin  -2500
