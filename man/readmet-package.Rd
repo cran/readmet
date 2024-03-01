@@ -1,4 +1,5 @@
 \name{readmet}
+\alias{readmet-package}
 \alias{readmet}
 \docType{package}
 \title{
@@ -29,6 +30,7 @@ Available functions:\cr
 \tabular{ll}{
 Function \tab Format\cr
 \cr
+read.akterm \tab function to read contents of a file in AKTERM-format\cr
 read.dmna \tab function to read contents of a file in DMNA-format\cr
 dmna.axes \tab read grid positions from a file in DMNA-format \cr
 dmna.header \tab read header information from a file in DMNA-format\cr
